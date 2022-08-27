@@ -1,17 +1,14 @@
 use bevy::prelude::*;
 
 #[derive(Component)]
-struct Player;
+pub struct Player;
 
 #[derive(Component)]
-struct Follower;
-
-#[derive(Component)]
-pub struct Collider;
+pub struct Follower;
 
 #[derive(Component)]
 pub struct Bystander {
-    pub heading: f32,
+    pub destination: Vec3,
     pub focus: f32,
 }
 
@@ -22,4 +19,14 @@ enum FollowerReason {
     RecognizedFromSchool,
     Murderer,
     TryingToReachYouRegardingCarsExtendedWarranty,
+}
+
+enum Locations {
+    BusStop,
+    ShirosDumplings,
+}
+
+#[derive(Component)]
+struct Spawner {
+    current_count: u32,
 }

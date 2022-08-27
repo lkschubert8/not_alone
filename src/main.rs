@@ -6,10 +6,17 @@ mod generation;
 mod systems;
 
 use bevy::prelude::*;
+use bevy_prototype_debug_lines::DebugLinesPlugin;
 use bevy_prototype_lyon::prelude::*;
+use bevy_rapier2d::parry::shape::Cuboid;
+use bevy_rapier2d::prelude::{
+    Collider, GravityScale, NoUserData, RapierConfiguration, RapierDebugRenderPlugin,
+    RapierPhysicsPlugin, Restitution, RigidBody, Velocity,
+};
 use components::*;
-use generation::generate_bystander;
-use systems::bystander_movement;
+use generation::{generate_bystander, get_buildings, player_init, Building};
+use rand::Rng;
+use systems::{bystander_movement, camera_tracker, follower_system, sprite_movement};
 
 fn main() {
     App::new()
@@ -17,21 +24,17 @@ fn main() {
         .add_plugins(DefaultPlugins)
         .add_plugin(ShapePlugin)
         .add_plugin(LogDiagnosticsPlugin::default())
+        .add_plugin(RapierPhysicsPlugin::<NoUserData>::pixels_per_meter(50.0))
+        // .add_plugin(RapierDebugRenderPlugin::default())
         .add_plugin(FrameTimeDiagnosticsPlugin::default())
+        .add_plugin(DebugLinesPlugin::default())
         .add_startup_system(setup)
         .add_system(sprite_movement)
         .add_system(bystander_movement)
+        .add_system(camera_tracker)
+        .add_system(follower_system)
         .run();
 }
-
-#[derive(Component)]
-enum Direction {
-    Up,
-    Down,
-}
-
-#[derive(Component)]
-struct Moveable;
 
 fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
     let shape = shapes::RegularPolygon {
@@ -39,27 +42,127 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
         feature: shapes::RegularPolygonFeature::Radius(10.0),
         ..shapes::RegularPolygon::default()
     };
-    commands
-        .spawn_bundle(Camera2dBundle::default())
-        .insert(Moveable);
+    commands.spawn_bundle(Camera2dBundle::default());
     commands.spawn_bundle(SpriteBundle {
         texture: asset_server.load("map.png"),
         transform: Transform::from_xyz(1920. / 2., 1080. / 2., 0.),
         ..default()
     });
+    build_walls(&mut commands);
+    let player_init = player_init();
+    create_player(&mut commands, shape.clone());
+
+    create_bystanders(&mut commands);
+    create_buildings(&mut commands);
+    commands.spawn_bundle(
+        // Create a TextBundle that has a Text with a single section.
+        TextBundle::from_section(
+            // Accepts a `String` or any type that converts into a `String`, such as `&str`
+            format!(
+                "Get To {}, Don't Let Them Follow You!",
+                player_init.destination.name
+            ),
+            TextStyle {
+                font: asset_server.load("fonts/Akira Expanded Demo.otf"),
+                font_size: 23.0,
+                color: Color::WHITE,
+            },
+        ) // Set the alignment of the Text
+        .with_text_alignment(TextAlignment::TOP_CENTER)
+        // Set the style of the TextBundle itself.
+        .with_style(Style {
+            align_self: AlignSelf::FlexEnd,
+            position_type: PositionType::Absolute,
+            position: UiRect {
+                bottom: Val::Px(5.0),
+                right: Val::Px(15.0),
+                ..default()
+            },
+            ..default()
+        }),
+    );
+    create_follower(commands, shape);
+}
+
+fn create_buildings(commands: &mut Commands) {
+    get_buildings()
+        .iter()
+        .for_each(|building| building.add_to_scene(commands));
+}
+
+fn create_follower(mut commands: Commands, shape: RegularPolygon) {
+    let mut rng = rand::thread_rng();
+    let eight_byte_range = 0.0..1.0;
+    let fill_color = Color::rgb(
+        rng.gen_range(eight_byte_range.clone()),
+        rng.gen_range(eight_byte_range.clone()),
+        rng.gen_range(eight_byte_range.clone()),
+    );
+    let stroke_color = Color::rgb(
+        rng.gen_range(eight_byte_range.clone()),
+        rng.gen_range(eight_byte_range.clone()),
+        rng.gen_range(eight_byte_range.clone()),
+    );
     commands
         .spawn_bundle(GeometryBuilder::build_as(
             &shape,
             DrawMode::Outlined {
-                fill_mode: FillMode::color(Color::CYAN),
-                outline_mode: StrokeMode::new(Color::BLACK, 5.0),
+                fill_mode: FillMode::color(fill_color),
+                outline_mode: StrokeMode::new(stroke_color, 5.0),
             },
-            Transform::from_xyz(0., 0., 4.),
+            Transform::from_xyz(500., 500., 4.),
         ))
-        .insert(Moveable {});
+        .insert(RigidBody::Dynamic)
+        .insert(GravityScale(0.0))
+        .insert(Collider::cuboid(10.0, 10.0))
+        .insert(Follower)
+        .insert(Velocity {
+            linvel: Vec2::new(1.0, 2.0),
+            angvel: 0.2,
+        });
+}
 
-    // Add a bystander to the scene
-    for _ in 1..1000 {
+fn build_walls(commands: &mut Commands) {
+    commands
+        .spawn()
+        .insert(RigidBody::Fixed)
+        .insert(Collider::cuboid(1920.0, 5.0))
+        .insert_bundle(TransformBundle::from(Transform::from_xyz(
+            1920.0 / 2.0,
+            -5.0,
+            0.0,
+        )));
+    commands
+        .spawn()
+        .insert(RigidBody::Fixed)
+        .insert(Collider::cuboid(1920.0, 5.0))
+        .insert_bundle(TransformBundle::from(Transform::from_xyz(
+            1920.0 / 2.0,
+            1080.0,
+            0.0,
+        )));
+    commands
+        .spawn()
+        .insert(RigidBody::Fixed)
+        .insert(Collider::cuboid(5.0, 1080.0))
+        .insert_bundle(TransformBundle::from(Transform::from_xyz(
+            0.0,
+            1080.0 / 2.0,
+            0.0,
+        )));
+    commands
+        .spawn()
+        .insert(RigidBody::Fixed)
+        .insert(Collider::cuboid(5.0, 1080.0))
+        .insert_bundle(TransformBundle::from(Transform::from_xyz(
+            1920.0,
+            1080.0 / 2.0,
+            0.0,
+        )));
+}
+
+fn create_bystanders(commands: &mut Commands) {
+    (1..1000).for_each(|_| {
         let bystander = generate_bystander();
         commands
             .spawn_bundle(GeometryBuilder::build_as(
@@ -75,33 +178,36 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
                 Transform::from_translation(bystander.start_location),
             ))
             .insert(Bystander {
-                heading: 0.,
+                destination: bystander.destination,
                 focus: bystander.focus,
             })
-            .insert(Collider);
-    }
+            .insert(RigidBody::Dynamic)
+            .insert(Restitution::coefficient(0.01))
+            .insert(GravityScale(0.0))
+            .insert(Collider::cuboid(10.0, 10.0))
+            .insert(Velocity {
+                linvel: Vec2::new(1.0, 2.0),
+                angvel: 0.2,
+            });
+    });
 }
 
-/// The sprite is animated by changing its translation depending on the time that has passed since
-/// the last frame.
-fn sprite_movement(
-    time: Res<Time>,
-    keys: Res<Input<KeyCode>>,
-    mut sprite_position: Query<&mut Transform, With<Moveable>>,
-) {
-    let speed = 100.0;
-    for mut transform in &mut sprite_position {
-        if keys.pressed(KeyCode::Up) {
-            transform.translation.y += speed * time.delta_seconds();
-        }
-        if keys.pressed(KeyCode::Down) {
-            transform.translation.y -= speed * time.delta_seconds();
-        }
-        if keys.pressed(KeyCode::Left) {
-            transform.translation.x -= speed * time.delta_seconds();
-        }
-        if keys.pressed(KeyCode::Right) {
-            transform.translation.x += speed * time.delta_seconds();
-        }
-    }
+fn create_player(commands: &mut Commands, shape: RegularPolygon) {
+    commands
+        .spawn_bundle(GeometryBuilder::build_as(
+            &shape,
+            DrawMode::Outlined {
+                fill_mode: FillMode::color(Color::CYAN),
+                outline_mode: StrokeMode::new(Color::BLACK, 5.0),
+            },
+            Transform::from_xyz(50., 10., 4.),
+        ))
+        .insert(RigidBody::Dynamic)
+        .insert(GravityScale(0.0))
+        .insert(Collider::cuboid(10.0, 10.0))
+        .insert(Player)
+        .insert(Velocity {
+            linvel: Vec2::new(1.0, 2.0),
+            angvel: 0.2,
+        });
 }
