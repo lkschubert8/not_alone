@@ -16,7 +16,18 @@ use bevy_rapier2d::prelude::{
 use components::*;
 use generation::{generate_bystander, get_buildings, player_init, Building};
 use rand::Rng;
-use systems::{bystander_movement, camera_tracker, follower_system, sprite_movement};
+use systems::{
+    bystander_movement, camera_tracker, follower_system, handle_player_arrival_at_destination,
+    sprite_movement,
+};
+
+#[derive(Debug, Clone, Eq, PartialEq, Hash)]
+enum AppState {
+    Menu,
+    InGame,
+    Win,
+    Lose,
+}
 
 fn main() {
     App::new()
@@ -25,14 +36,16 @@ fn main() {
         .add_plugin(ShapePlugin)
         .add_plugin(LogDiagnosticsPlugin::default())
         .add_plugin(RapierPhysicsPlugin::<NoUserData>::pixels_per_meter(50.0))
-        // .add_plugin(RapierDebugRenderPlugin::default())
+        .add_plugin(RapierDebugRenderPlugin::default())
         .add_plugin(FrameTimeDiagnosticsPlugin::default())
         .add_plugin(DebugLinesPlugin::default())
+        .add_state(AppState::Menu)
         .add_startup_system(setup)
         .add_system(sprite_movement)
         .add_system(bystander_movement)
         .add_system(camera_tracker)
         .add_system(follower_system)
+        .add_system(handle_player_arrival_at_destination)
         .run();
 }
 
@@ -49,38 +62,11 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
         ..default()
     });
     build_walls(&mut commands);
-    let player_init = player_init();
-    create_player(&mut commands, shape.clone());
+    create_player(&mut commands, shape.clone(), asset_server);
 
     create_bystanders(&mut commands);
     create_buildings(&mut commands);
-    commands.spawn_bundle(
-        // Create a TextBundle that has a Text with a single section.
-        TextBundle::from_section(
-            // Accepts a `String` or any type that converts into a `String`, such as `&str`
-            format!(
-                "Get To {}, Don't Let Them Follow You!",
-                player_init.destination.name
-            ),
-            TextStyle {
-                font: asset_server.load("fonts/Akira Expanded Demo.otf"),
-                font_size: 23.0,
-                color: Color::WHITE,
-            },
-        ) // Set the alignment of the Text
-        .with_text_alignment(TextAlignment::TOP_CENTER)
-        // Set the style of the TextBundle itself.
-        .with_style(Style {
-            align_self: AlignSelf::FlexEnd,
-            position_type: PositionType::Absolute,
-            position: UiRect {
-                bottom: Val::Px(5.0),
-                right: Val::Px(15.0),
-                ..default()
-            },
-            ..default()
-        }),
-    );
+
     create_follower(commands, shape);
 }
 
@@ -179,6 +165,7 @@ fn create_bystanders(commands: &mut Commands) {
             ))
             .insert(Bystander {
                 destination: bystander.destination,
+                destination_building: bystander.destination_building,
                 focus: bystander.focus,
             })
             .insert(RigidBody::Dynamic)
@@ -192,7 +179,35 @@ fn create_bystanders(commands: &mut Commands) {
     });
 }
 
-fn create_player(commands: &mut Commands, shape: RegularPolygon) {
+fn create_player(commands: &mut Commands, shape: RegularPolygon, asset_server: Res<AssetServer>) {
+    let player_init = player_init();
+    commands.spawn_bundle(
+        // Create a TextBundle that has a Text with a single section.
+        TextBundle::from_section(
+            // Accepts a `String` or any type that converts into a `String`, such as `&str`
+            format!(
+                "Get To {}, Don't Let Them Follow You!",
+                player_init.destination.name
+            ),
+            TextStyle {
+                font: asset_server.load("fonts/Akira Expanded Demo.otf"),
+                font_size: 23.0,
+                color: Color::WHITE,
+            },
+        ) // Set the alignment of the Text
+        .with_text_alignment(TextAlignment::TOP_CENTER)
+        // Set the style of the TextBundle itself.
+        .with_style(Style {
+            align_self: AlignSelf::FlexEnd,
+            position_type: PositionType::Absolute,
+            position: UiRect {
+                bottom: Val::Px(5.0),
+                right: Val::Px(15.0),
+                ..default()
+            },
+            ..default()
+        }),
+    );
     commands
         .spawn_bundle(GeometryBuilder::build_as(
             &shape,
@@ -205,7 +220,9 @@ fn create_player(commands: &mut Commands, shape: RegularPolygon) {
         .insert(RigidBody::Dynamic)
         .insert(GravityScale(0.0))
         .insert(Collider::cuboid(10.0, 10.0))
-        .insert(Player)
+        .insert(Player {
+            destination: player_init.destination,
+        })
         .insert(Velocity {
             linvel: Vec2::new(1.0, 2.0),
             angvel: 0.2,

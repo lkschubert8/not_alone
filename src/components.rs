@@ -1,7 +1,11 @@
 use bevy::prelude::*;
 
+use crate::generation::Building;
+
 #[derive(Component)]
-pub struct Player;
+pub struct Player {
+    pub destination: Building,
+}
 
 #[derive(Component)]
 pub struct Follower;
@@ -9,6 +13,7 @@ pub struct Follower;
 #[derive(Component)]
 pub struct Bystander {
     pub destination: Vec3,
+    pub destination_building: Building,
     pub focus: f32,
 }
 
@@ -21,12 +26,12 @@ enum FollowerReason {
     TryingToReachYouRegardingCarsExtendedWarranty,
 }
 
-enum Locations {
-    BusStop,
-    ShirosDumplings,
+#[derive(Component)]
+pub struct Spawner {
+    pub current_count: u32,
 }
 
 #[derive(Component)]
-struct Spawner {
-    current_count: u32,
+pub struct Entrance {
+    pub building: Building,
 }

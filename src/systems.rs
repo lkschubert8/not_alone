@@ -2,10 +2,13 @@ use std::f32::consts::PI;
 
 use bevy::prelude::*;
 use bevy_prototype_debug_lines::DebugLines;
-use bevy_rapier2d::prelude::Velocity;
+use bevy_rapier2d::{
+    prelude::{RapierContext, Velocity},
+    rapier::{prelude::CollisionEvent, rayon::spawn},
+};
 use rand::Rng;
 
-use crate::components::{Bystander, Follower, Player};
+use crate::components::{Bystander, Entrance, Follower, Player, Spawner};
 
 pub fn bystander_movement(
     time: Res<Time>,
@@ -104,5 +107,44 @@ pub fn sprite_movement(
         velocity.linvel = velocity.linvel * 0.95;
         velocity.angvel = 0.0;
         // println!("({},{})", transform.translation.x, transform.translation.y);
+    }
+}
+
+fn handle_bystanders_arriving_at_destination(
+    rapier_context: Res<RapierContext>,
+    query_entrances: Query<(Entity, &Entrance)>,
+    query_bystanders: Query<(Entity, &Bystander)>,
+    mut spawner_query: Query<&mut Spawner>,
+    mut commands: Commands,
+) {
+    let mut spawner = spawner_query.single_mut();
+    for (entrance, entrance_component) in query_entrances.iter() {
+        for (bystander, bystander_component) in query_bystanders.iter() {
+            if rapier_context.intersection_pair(entrance, bystander) == Some(true) {
+                if entrance_component.building.name == bystander_component.destination_building.name
+                {
+                    commands.entity(bystander).despawn();
+                    spawner.current_count -= 1;
+                }
+            }
+        }
+    }
+}
+
+fn handle_spawners() {}
+
+pub fn handle_player_arrival_at_destination(
+    rapier_context: Res<RapierContext>,
+    query_entrances: Query<(Entity, &Entrance)>,
+    query_player: Query<(Entity, &Player)>,
+) {
+    let (player, player_component) = query_player.single();
+
+    for (entrance, entrance_component) in query_entrances.iter() {
+        if rapier_context.intersection_pair(entrance, player) == Some(true) {
+            if entrance_component.building.name == player_component.destination.name {
+                println!("Player arrived at destination");
+            }
+        }
     }
 }

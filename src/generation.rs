@@ -24,6 +24,7 @@ pub struct BystanderInit {
     pub start_location: Vec3,
     pub focus: f32,
     pub destination: Vec3,
+    pub destination_building: Building,
 }
 pub fn generate_bystander() -> BystanderInit {
     let mut rng = rand::thread_rng();
@@ -44,9 +45,14 @@ pub fn generate_bystander() -> BystanderInit {
     let z = rng.gen_range(0.0..1.0);
 
     let binding = get_buildings();
-    let destination_building = binding.choose(&mut rng).unwrap();
+    let destination_building = binding.choose(&mut rng).unwrap().clone();
     // TODO make the entry to the building
-    let destination = destination_building.bounds.min.extend(0.);
+    let entrance = destination_building.entrance.unwrap();
+    let destination = Vec3::new(
+        (entrance.min.x + entrance.max.x) / 2.,
+        (entrance.min.y + entrance.max.y) / 2.,
+        0.,
+    );
     BystanderInit {
         fill_color,
         stroke_color,
@@ -54,14 +60,15 @@ pub fn generate_bystander() -> BystanderInit {
         start_location: Vec3::new(x, y, z),
         focus: rng.gen_range(1.0..4.),
         destination,
+        destination_building,
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Component)]
 pub struct Building {
     pub name: String,
     pub bounds: Rect,
-    pub entrance: Rect,
+    pub entrance: Option<Rect>,
 }
 
 impl Building {
@@ -83,21 +90,24 @@ impl Building {
 
 pub fn get_buildings() -> Vec<Building> {
     vec![
-        Building {
-            name: "Bus".to_string(),
-            bounds: Rect {
-                min: Vec2::new(50., 0.),
-                max: Vec2::new(100.0, 215.0),
-            },
-            entrance: Rect::default(),
-        },
+        // Building {
+        //     name: "Bus".to_string(),
+        //     bounds: Rect {
+        //         min: Vec2::new(50., 0.),
+        //         max: Vec2::new(100.0, 215.0),
+        //     },
+        //     entrance: None,
+        // },
         Building {
             name: "Bus Stop".to_string(),
             bounds: Rect {
                 min: Vec2::new(210., 0.),
                 max: Vec2::new(717., 90.0),
             },
-            entrance: Rect::default(),
+            entrance: Some(Rect {
+                min: Vec2::new(489., 1080. - 989.),
+                max: Vec2::new(551., 1080.0 - 969.0),
+            }),
         },
         Building {
             name: "Ramen Shop".to_string(),
@@ -105,7 +115,10 @@ pub fn get_buildings() -> Vec<Building> {
                 min: Vec2::new(460., 250.),
                 max: Vec2::new(732., 1080.0 - 640.0),
             },
-            entrance: Rect::default(),
+            entrance: Some(Rect {
+                min: Vec2::new(515., 1080. - 840.),
+                max: Vec2::new(543., 1080.0 - 832.0),
+            }),
         },
         Building {
             name: "Pop and Pop Shop".to_string(),
@@ -113,7 +126,10 @@ pub fn get_buildings() -> Vec<Building> {
                 min: Vec2::new(841., 1080. - 831.),
                 max: Vec2::new(1191., 1080.0 - 601.0),
             },
-            entrance: Rect::default(),
+            entrance: Some(Rect {
+                min: Vec2::new(903., 1080. - 841.),
+                max: Vec2::new(994., 1080.0 - 832.0),
+            }),
         },
         Building {
             name: "The Gun Show".to_string(),
@@ -121,7 +137,10 @@ pub fn get_buildings() -> Vec<Building> {
                 min: Vec2::new(1266., 1080. - 831.),
                 max: Vec2::new(1494., 1080.0 - 675.0),
             },
-            entrance: Rect::default(),
+            entrance: Some(Rect {
+                min: Vec2::new(1290., 1080. - 840.),
+                max: Vec2::new(1310., 1080.0 - 832.0),
+            }),
         },
         Building {
             name: "Strip Mall".to_string(),
@@ -129,7 +148,10 @@ pub fn get_buildings() -> Vec<Building> {
                 min: Vec2::new(1689., 1080. - 1080.),
                 max: Vec2::new(1920., 1080.0 - 649.0),
             },
-            entrance: Rect::default(),
+            entrance: Some(Rect {
+                min: Vec2::new(1662., 1080. - 906.),
+                max: Vec2::new(1688., 1080.0 - 916.0),
+            }),
         },
         Building {
             name: "Grocery Store".to_string(),
@@ -137,15 +159,21 @@ pub fn get_buildings() -> Vec<Building> {
                 min: Vec2::new(1701., 1080. - 603.),
                 max: Vec2::new(1920., 1080.0 - 0.0),
             },
-            entrance: Rect::default(),
+            entrance: Some(Rect {
+                min: Vec2::new(1679., 1080. - 161.),
+                max: Vec2::new(1700., 1080.0 - 97.0),
+            }),
         },
         Building {
-            name: "Grocery Store".to_string(),
+            name: "Someplace".to_string(),
             bounds: Rect {
                 min: Vec2::new(1094., 1080. - 426.),
                 max: Vec2::new(1463., 1080.0 - 175.0),
             },
-            entrance: Rect::default(),
+            entrance: Some(Rect {
+                min: Vec2::new(1215., 1080. - 449.),
+                max: Vec2::new(1248., 1080.0 - 427.0),
+            }),
         },
         Building {
             name: "The Tower".to_string(),
@@ -153,15 +181,21 @@ pub fn get_buildings() -> Vec<Building> {
                 min: Vec2::new(712., 1080. - 426.),
                 max: Vec2::new(951., 1080.0 - 0.0),
             },
-            entrance: Rect::default(),
+            entrance: Some(Rect {
+                min: Vec2::new(792., 1080. - 440.),
+                max: Vec2::new(856., 1080.0 - 427.0),
+            }),
         },
         Building {
-            name: "The Tower".to_string(),
+            name: "Knight's Knick Knacks".to_string(),
             bounds: Rect {
                 min: Vec2::new(459., 1080. - 430.),
                 max: Vec2::new(606., 1080.0 - 190.0),
             },
-            entrance: Rect::default(),
+            entrance: Some(Rect {
+                min: Vec2::new(512., 1080. - 438.),
+                max: Vec2::new(537., 1080.0 - 430.0),
+            }),
         },
     ]
 }
