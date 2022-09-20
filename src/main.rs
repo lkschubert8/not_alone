@@ -22,7 +22,7 @@ use systems::{
 };
 
 #[derive(Debug, Clone, Eq, PartialEq, Hash)]
-enum AppState {
+pub enum AppState {
     Menu,
     Game,
     Win,
@@ -54,6 +54,14 @@ fn main() {
                 .with_system(follower_system)
                 .with_system(handle_player_arrival_at_destination),
         )
+        // Lose System
+        .add_system_set(SystemSet::on_exit(AppState::Lose).with_system(main_menu_cleanup))
+        .add_system_set(SystemSet::on_update(AppState::Lose).with_system(win_lose_space_to_main))
+        .add_system_set(SystemSet::on_enter(AppState::Lose).with_system(lose_setup))
+        // Win System
+        .add_system_set(SystemSet::on_exit(AppState::Win).with_system(main_menu_cleanup))
+        .add_system_set(SystemSet::on_update(AppState::Win).with_system(win_lose_space_to_main))
+        .add_system_set(SystemSet::on_enter(AppState::Win).with_system(win_setup))
         .run();
 }
 
@@ -72,6 +80,29 @@ fn main_menu_space_to_start(keys: Res<Input<KeyCode>>, mut app_state: ResMut<Sta
     }
 }
 
+fn win_lose_space_to_main(keys: Res<Input<KeyCode>>, mut app_state: ResMut<State<AppState>>) {
+    if keys.pressed(KeyCode::Space) {
+        app_state.set(AppState::Menu).unwrap();
+    }
+}
+
+fn win_setup(mut commands: Commands, asset_server: Res<AssetServer>) {
+    commands.spawn_bundle(Camera2dBundle::default());
+    commands.spawn_bundle(SpriteBundle {
+        texture: asset_server.load("win_splash.png"),
+        transform: Transform::from_xyz(0., 0., 0.).with_scale(Vec3::new(0.7, 0.7, 0.7)),
+        ..default()
+    });
+}
+
+fn lose_setup(mut commands: Commands, asset_server: Res<AssetServer>) {
+    commands.spawn_bundle(Camera2dBundle::default());
+    commands.spawn_bundle(SpriteBundle {
+        texture: asset_server.load("lose_splash.png"),
+        transform: Transform::from_xyz(0., 0., 0.).with_scale(Vec3::new(0.7, 0.7, 0.7)),
+        ..default()
+    });
+}
 fn main_menu_cleanup(mut commands: Commands, mut entity: Query<Entity>) {
     for entity in entity.iter_mut() {
         commands.entity(entity).despawn();
@@ -176,7 +207,7 @@ fn build_walls(commands: &mut Commands) {
 }
 
 fn create_bystanders(commands: &mut Commands) {
-    (1..5).for_each(|_| {
+    (1..1000).for_each(|_| {
         let bystander = generate_bystander();
         commands
             .spawn_bundle(GeometryBuilder::build_as(

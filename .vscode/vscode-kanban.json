@@ -25,11 +25,15 @@
         "name": "Luke Schubert"
       },
       "category": "Gameplay",
-      "creation_time": "2022-09-20T00:38:09.526Z",
-      "id": "6",
+      "creation_time": "2022-09-20T11:52:23.871Z",
+      "description": {
+        "content": "https://rapier.rs/docs/user_guides/bevy_plugin/scene_queries#query-filters",
+        "mime": "text/markdown"
+      },
+      "id": "7",
       "prio": 1,
       "references": [],
-      "title": "Add win/lose screens"
+      "title": "Get the follower to see through people"
     }
   ],
   "in-progress": [],
@@ -55,6 +59,17 @@
       "prio": 1,
       "references": [],
       "title": "add title screen"
+    },
+    {
+      "assignedTo": {
+        "name": "Luke Schubert"
+      },
+      "category": "Gameplay",
+      "creation_time": "2022-09-20T00:38:09.526Z",
+      "id": "6",
+      "prio": 1,
+      "references": [],
+      "title": "Add win/lose screens"
     },
     {
       "assignedTo": {

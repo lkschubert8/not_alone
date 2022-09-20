@@ -8,7 +8,10 @@ use bevy_rapier2d::{
 };
 use rand::Rng;
 
-use crate::components::{Bystander, Entrance, Follower, Player, Spawner};
+use crate::{
+    components::{Bystander, Entrance, Follower, Player, Spawner},
+    AppState,
+};
 
 pub fn bystander_movement(
     time: Res<Time>,
@@ -136,6 +139,7 @@ pub fn handle_player_arrival_at_destination(
     query_entrances: Query<(Entity, &Entrance)>,
     query_player: Query<(Entity, &Player, &Transform)>,
     query_follower: Query<(Entity, &Follower, &Transform)>,
+    mut app_state: ResMut<State<AppState>>,
 ) {
     let (player, player_component, player_transform) = query_player.single();
     let (follower, follower_component, follower_transform) = query_follower.single();
@@ -151,7 +155,7 @@ pub fn handle_player_arrival_at_destination(
                 if let Some((entity, _)) = rapier_context.cast_ray(
                     ray_origin,
                     ray_direction,
-                    40.0,
+                    200.0,
                     true,
                     QueryFilter::default(),
                 ) {
@@ -160,10 +164,12 @@ pub fn handle_player_arrival_at_destination(
                         entity, player, follower
                     );
                     if entity == player {
-                        println!("They were spotted");
+                        app_state.set(AppState::Lose).unwrap();
                     } else {
-                        println!("Made it!");
+                        app_state.set(AppState::Win).unwrap();
                     }
+                } else {
+                    app_state.set(AppState::Win).unwrap();
                 }
             }
         }
