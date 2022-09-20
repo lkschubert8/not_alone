@@ -24,7 +24,7 @@ use systems::{
 #[derive(Debug, Clone, Eq, PartialEq, Hash)]
 enum AppState {
     Menu,
-    InGame,
+    Game,
     Win,
     Lose,
 }
@@ -34,21 +34,49 @@ fn main() {
         .insert_resource(ClearColor(Color::rgb(0.0, 0.0, 0.0)))
         .add_plugins(DefaultPlugins)
         .add_plugin(ShapePlugin)
-        .add_plugin(LogDiagnosticsPlugin::default())
+        // .add_plugin(LogDiagnosticsPlugin::default())
         .add_plugin(RapierPhysicsPlugin::<NoUserData>::pixels_per_meter(50.0))
-        .add_plugin(RapierDebugRenderPlugin::default())
-        .add_plugin(FrameTimeDiagnosticsPlugin::default())
+        // .add_plugin(RapierDebugRenderPlugin::default())
+        // .add_plugin(FrameTimeDiagnosticsPlugin::default())
         .add_plugin(DebugLinesPlugin::default())
         .add_state(AppState::Menu)
-        .add_startup_system(setup)
-        .add_system(sprite_movement)
-        .add_system(bystander_movement)
-        .add_system(camera_tracker)
-        .add_system(follower_system)
-        .add_system(handle_player_arrival_at_destination)
+        //Main Screen Systems
+        .add_system_set(SystemSet::on_enter(AppState::Menu).with_system(main_menu_setup))
+        .add_system_set(SystemSet::on_update(AppState::Menu).with_system(main_menu_space_to_start))
+        .add_system_set(SystemSet::on_exit(AppState::Menu).with_system(main_menu_cleanup))
+        // Game Systems
+        .add_system_set(SystemSet::on_enter(AppState::Game).with_system(setup))
+        .add_system_set(
+            SystemSet::on_update(AppState::Game)
+                .with_system(sprite_movement)
+                .with_system(bystander_movement)
+                .with_system(camera_tracker)
+                .with_system(follower_system)
+                .with_system(handle_player_arrival_at_destination),
+        )
         .run();
 }
 
+fn main_menu_setup(mut commands: Commands, asset_server: Res<AssetServer>) {
+    commands.spawn_bundle(Camera2dBundle::default());
+    commands.spawn_bundle(SpriteBundle {
+        texture: asset_server.load("main_menu.png"),
+        transform: Transform::from_xyz(0., 0., 0.).with_scale(Vec3::new(0.7, 0.7, 0.7)),
+        ..default()
+    });
+}
+
+fn main_menu_space_to_start(keys: Res<Input<KeyCode>>, mut app_state: ResMut<State<AppState>>) {
+    if keys.pressed(KeyCode::Space) {
+        app_state.set(AppState::Game).unwrap();
+    }
+}
+
+fn main_menu_cleanup(mut commands: Commands, mut entity: Query<Entity>) {
+    for entity in entity.iter_mut() {
+        commands.entity(entity).despawn();
+    }
+}
 fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
     let shape = shapes::RegularPolygon {
         sides: 6,
@@ -148,7 +176,7 @@ fn build_walls(commands: &mut Commands) {
 }
 
 fn create_bystanders(commands: &mut Commands) {
-    (1..1000).for_each(|_| {
+    (1..5).for_each(|_| {
         let bystander = generate_bystander();
         commands
             .spawn_bundle(GeometryBuilder::build_as(

@@ -5,22 +5,45 @@
         "name": "Luke Schubert"
       },
       "category": "Gameplay",
-      "creation_time": "2022-09-18T18:02:16.296Z",
-      "id": "3",
+      "creation_time": "2022-09-18T18:02:37.614Z",
+      "id": "4",
       "prio": 1,
       "references": [],
-      "title": "Add check for win or loss based on whether or not the follower can see you"
+      "title": "add some music"
+    },
+    {
+      "assignedTo": {
+        "name": "Luke Schubert"
+      },
+      "creation_time": "2022-09-18T17:59:48.565Z",
+      "id": "1",
+      "references": [],
+      "title": "Finish artwork for all stores"
     },
     {
       "assignedTo": {
         "name": "Luke Schubert"
       },
       "category": "Gameplay",
-      "creation_time": "2022-09-18T18:02:37.614Z",
-      "id": "4",
+      "creation_time": "2022-09-20T00:38:09.526Z",
+      "id": "6",
       "prio": 1,
       "references": [],
-      "title": "add some music"
+      "title": "Add win/lose screens"
+    }
+  ],
+  "in-progress": [],
+  "done": [
+    {
+      "assignedTo": {
+        "name": "Luke Schubert"
+      },
+      "category": "Gameplay",
+      "creation_time": "2022-09-18T18:02:16.296Z",
+      "id": "3",
+      "prio": 1,
+      "references": [],
+      "title": "Add check for win or loss based on whether or not the follower can see you"
     },
     {
       "assignedTo": {
@@ -37,17 +60,6 @@
       "assignedTo": {
         "name": "Luke Schubert"
       },
-      "creation_time": "2022-09-18T17:59:48.565Z",
-      "id": "1",
-      "references": [],
-      "title": "Finish artwork for all stores"
-    }
-  ],
-  "in-progress": [
-    {
-      "assignedTo": {
-        "name": "Luke Schubert"
-      },
       "category": "Gameplay",
       "creation_time": "2022-09-18T18:00:47.614Z",
       "id": "2",
@@ -55,6 +67,5 @@
       "title": "Add check for win when player gets to destination entry"
     }
   ],
-  "testing": [],
-  "done": []
+  "testing": []
 }

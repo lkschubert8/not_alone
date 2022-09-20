@@ -1,7 +1,8 @@
 use bevy::{prelude::*, sprite::Rect};
-use bevy_prototype_lyon::prelude::{tess::path::commands, *};
-use bevy_rapier2d::prelude::{Collider, RigidBody};
+use bevy_rapier2d::prelude::*;
 use rand::{seq::SliceRandom, Rng};
+
+use crate::components::Entrance;
 
 pub struct PlayerInit {
     pub origin: Building,
@@ -83,6 +84,22 @@ impl Building {
             .insert_bundle(TransformBundle::from(Transform::from_xyz(
                 (self.bounds.max.x + self.bounds.min.x) / 2.,
                 (self.bounds.max.y + self.bounds.min.y) / 2.,
+                0.0,
+            )));
+        commands
+            .spawn()
+            .insert(RigidBody::Fixed)
+            .insert(Collider::cuboid(
+                self.entrance.unwrap().width() / 2.,
+                self.entrance.unwrap().height() / 2.,
+            ))
+            .insert(Sensor)
+            .insert(Entrance {
+                building_name: self.name.clone(),
+            })
+            .insert_bundle(TransformBundle::from(Transform::from_xyz(
+                (self.entrance.unwrap().max.x + self.entrance.unwrap().min.x) / 2.,
+                (self.entrance.unwrap().max.y + self.entrance.unwrap().min.y) / 2.,
                 0.0,
             )));
     }

@@ -3,7 +3,7 @@ use std::f32::consts::PI;
 use bevy::prelude::*;
 use bevy_prototype_debug_lines::DebugLines;
 use bevy_rapier2d::{
-    prelude::{RapierContext, Velocity},
+    prelude::{QueryFilter, RapierContext, Velocity},
     rapier::{prelude::CollisionEvent, rayon::spawn},
 };
 use rand::Rng;
@@ -121,7 +121,7 @@ fn handle_bystanders_arriving_at_destination(
     for (entrance, entrance_component) in query_entrances.iter() {
         for (bystander, bystander_component) in query_bystanders.iter() {
             if rapier_context.intersection_pair(entrance, bystander) == Some(true) {
-                if entrance_component.building.name == bystander_component.destination_building.name
+                if entrance_component.building_name == bystander_component.destination_building.name
                 {
                     commands.entity(bystander).despawn();
                     spawner.current_count -= 1;
@@ -131,19 +131,40 @@ fn handle_bystanders_arriving_at_destination(
     }
 }
 
-fn handle_spawners() {}
-
 pub fn handle_player_arrival_at_destination(
     rapier_context: Res<RapierContext>,
     query_entrances: Query<(Entity, &Entrance)>,
-    query_player: Query<(Entity, &Player)>,
+    query_player: Query<(Entity, &Player, &Transform)>,
+    query_follower: Query<(Entity, &Follower, &Transform)>,
 ) {
-    let (player, player_component) = query_player.single();
-
+    let (player, player_component, player_transform) = query_player.single();
+    let (follower, follower_component, follower_transform) = query_follower.single();
     for (entrance, entrance_component) in query_entrances.iter() {
         if rapier_context.intersection_pair(entrance, player) == Some(true) {
-            if entrance_component.building.name == player_component.destination.name {
+            if entrance_component.building_name == player_component.destination.name {
                 println!("Player arrived at destination");
+                // Check if player can be seen by the follower
+                let follower_center = follower_transform.translation.truncate();
+                let player_location = player_transform.translation.truncate();
+                let ray_direction = (player_location - follower_center).normalize() * 3.0;
+                let ray_origin = follower_center + (ray_direction * 8.0);
+                if let Some((entity, _)) = rapier_context.cast_ray(
+                    ray_origin,
+                    ray_direction,
+                    40.0,
+                    true,
+                    QueryFilter::default(),
+                ) {
+                    println!(
+                        "Entity {:?} hit at point, player == {:?}, follower == {:?}",
+                        entity, player, follower
+                    );
+                    if entity == player {
+                        println!("They were spotted");
+                    } else {
+                        println!("Made it!");
+                    }
+                }
             }
         }
     }

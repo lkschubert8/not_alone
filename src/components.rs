@@ -17,15 +17,6 @@ pub struct Bystander {
     pub focus: f32,
 }
 
-enum FollowerReason {
-    DroppedWallet,
-    DroppedPhone,
-    Crush,
-    RecognizedFromSchool,
-    Murderer,
-    TryingToReachYouRegardingCarsExtendedWarranty,
-}
-
 #[derive(Component)]
 pub struct Spawner {
     pub current_count: u32,
@@ -33,5 +24,5 @@ pub struct Spawner {
 
 #[derive(Component)]
 pub struct Entrance {
-    pub building: Building,
+    pub building_name: String,
 }
