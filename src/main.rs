@@ -10,8 +10,8 @@ use bevy_prototype_debug_lines::DebugLinesPlugin;
 use bevy_prototype_lyon::prelude::*;
 use bevy_rapier2d::parry::shape::Cuboid;
 use bevy_rapier2d::prelude::{
-    Collider, GravityScale, NoUserData, RapierConfiguration, RapierDebugRenderPlugin,
-    RapierPhysicsPlugin, Restitution, RigidBody, Velocity,
+    Collider, CollisionGroups, GravityScale, NoUserData, RapierConfiguration,
+    RapierDebugRenderPlugin, RapierPhysicsPlugin, Restitution, RigidBody, Velocity,
 };
 use components::*;
 use generation::{generate_bystander, get_buildings, player_init, Building};
@@ -227,6 +227,7 @@ fn create_bystanders(commands: &mut Commands) {
                 destination_building: bystander.destination_building,
                 focus: bystander.focus,
             })
+            .insert(CollisionGroups::new(0b1, 0b1))
             .insert(RigidBody::Dynamic)
             .insert(Restitution::coefficient(0.01))
             .insert(GravityScale(0.0))

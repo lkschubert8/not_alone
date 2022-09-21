@@ -127,7 +127,7 @@ pub fn get_buildings() -> Vec<Building> {
             }),
         },
         Building {
-            name: "Ramen Shop".to_string(),
+            name: "Conner's Ramen".to_string(),
             bounds: Rect {
                 min: Vec2::new(460., 250.),
                 max: Vec2::new(732., 1080.0 - 640.0),
@@ -171,7 +171,7 @@ pub fn get_buildings() -> Vec<Building> {
             }),
         },
         Building {
-            name: "Grocery Store".to_string(),
+            name: "XYZ Mart".to_string(),
             bounds: Rect {
                 min: Vec2::new(1701., 1080. - 603.),
                 max: Vec2::new(1920., 1080.0 - 0.0),
@@ -182,7 +182,7 @@ pub fn get_buildings() -> Vec<Building> {
             }),
         },
         Building {
-            name: "Someplace".to_string(),
+            name: "Bub's Pub".to_string(),
             bounds: Rect {
                 min: Vec2::new(1094., 1080. - 426.),
                 max: Vec2::new(1463., 1080.0 - 175.0),
@@ -204,7 +204,7 @@ pub fn get_buildings() -> Vec<Building> {
             }),
         },
         Building {
-            name: "Knight's Knick Knacks".to_string(),
+            name: "Knight's Web Cafe".to_string(),
             bounds: Rect {
                 min: Vec2::new(459., 1080. - 430.),
                 max: Vec2::new(606., 1080.0 - 190.0),

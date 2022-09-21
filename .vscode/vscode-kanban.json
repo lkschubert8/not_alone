@@ -19,7 +19,9 @@
       "id": "1",
       "references": [],
       "title": "Finish artwork for all stores"
-    },
+    }
+  ],
+  "in-progress": [
     {
       "assignedTo": {
         "name": "Luke Schubert"
@@ -36,7 +38,6 @@
       "title": "Get the follower to see through people"
     }
   ],
-  "in-progress": [],
   "done": [
     {
       "assignedTo": {

@@ -1,9 +1,9 @@
 use std::f32::consts::PI;
 
-use bevy::prelude::*;
+use bevy::{ecs::query, prelude::*};
 use bevy_prototype_debug_lines::DebugLines;
 use bevy_rapier2d::{
-    prelude::{QueryFilter, RapierContext, Velocity},
+    prelude::{InteractionGroups, QueryFilter, RapierContext, Velocity},
     rapier::{prelude::CollisionEvent, rayon::spawn},
 };
 use rand::Rng;
@@ -152,13 +152,13 @@ pub fn handle_player_arrival_at_destination(
                 let player_location = player_transform.translation.truncate();
                 let ray_direction = (player_location - follower_center).normalize() * 3.0;
                 let ray_origin = follower_center + (ray_direction * 8.0);
-                if let Some((entity, _)) = rapier_context.cast_ray(
-                    ray_origin,
-                    ray_direction,
-                    200.0,
-                    true,
-                    QueryFilter::default(),
-                ) {
+
+                let query_filter = QueryFilter::default()
+                    .exclude_sensors()
+                    .groups(InteractionGroups::new(0b10, 0b10));
+                if let Some((entity, _)) =
+                    rapier_context.cast_ray(ray_origin, ray_direction, 200.0, true, query_filter)
+                {
                     println!(
                         "Entity {:?} hit at point, player == {:?}, follower == {:?}",
                         entity, player, follower
